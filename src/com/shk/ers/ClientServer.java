@@ -1,6 +1,5 @@
 package com.shk.ers;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
@@ -31,10 +30,9 @@ public class ClientServer extends Server implements Deliver {
 
 		mSocket = socket;
 
-		InputStream is = socket.getInputStream();
-		StreamReader sr = new StreamReader(is);
-
 		while (true) {
+			StreamReader sr = new StreamReader(mSocket.getInputStream());
+			
 			byte[] bs = new byte[4];
 			sr.readFull(bs);
 			int length = (int) Convert.bs2n(bs) - 4;
@@ -43,6 +41,19 @@ public class ClientServer extends Server implements Deliver {
 
 			sr.readFull(bs);
 			int id = (int) Convert.bs2n(bs);
+			if (id == 0) {
+				OutputStream os = mSocket.getOutputStream();
+				
+				synchronized (mSocket) {
+					os.write(Convert.n2bs(4, 4));
+					os.write(Convert.n2bs(0, 4));
+					os.flush();
+				}
+				
+				Logger.print(Level.V, "heart beat");
+				continue;
+			}
+			
 			Socket s = mSocketMap.remove(id);
 
 			Logger.print(Level.V, "client read id " + id);
@@ -66,18 +77,24 @@ public class ClientServer extends Server implements Deliver {
 	public void deliver(Socket socket, byte[] bs) throws Exception {
 		OutputStream os = mSocket.getOutputStream();
 
-		os.write(Convert.n2bs(4 + bs.length, 4));
-
-		int id = createId();
-		os.write(Convert.n2bs(id, 4));
-		mSocketMap.put(id, socket);
-
-		os.write(bs);
-
-		os.flush();
+		synchronized (mSocket) {
+			os.write(Convert.n2bs(4 + bs.length, 4));
+	
+			int id = createId();
+			os.write(Convert.n2bs(id, 4));
+			mSocketMap.put(id, socket);
+	
+			os.write(bs);
+	
+			os.flush();
+		}
 	}
 
 	private synchronized int createId() {
-		return ++mId;
+		if (++mId == 0) {
+			++mId;
+		}
+		
+		return mId;
 	}
 }
