@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import com.shk.js.io.StreamReader;
 import com.shk.js.log.Level;
 import com.shk.js.log.Logger;
 
@@ -17,19 +16,20 @@ public class HttpServer extends Server implements Deliver {
 
 	@Override
 	public void onSocket(Socket socket) throws Exception {
-		socket.setSoTimeout(300);
+		socket.setSoTimeout(1000);
 		InputStream is = socket.getInputStream();
-		StreamReader sr = new StreamReader(is);
-		byte[] bs = sr.readBytes();
+		
+		HttpReader hr = new HttpReader(is);
+		byte[] bs = hr.read();
 
 		Logger.print(Level.V, "http read socket " + socket.hashCode());
 		Logger.print(Level.V, "http read length " + bs.length);
 
-		try {
-			String str = new String(bs);
-			Logger.print(Level.V, "http read content", str);
-		} catch (Exception e) {
-		}
+//		try {
+//			String str = new String(bs);
+//			Logger.print(Level.V, "http read content", str);
+//		} catch (Exception e) {
+//		}
 
 		mDeliver.deliver(socket, bs);
 	}
@@ -38,11 +38,11 @@ public class HttpServer extends Server implements Deliver {
 	public void deliver(Socket socket, byte[] bs) throws Exception {
 		Logger.print(Level.V, "http write socket " + socket.hashCode());
 
-		try {
-			String str = new String(bs);
-			Logger.print(Level.V, "http write content", str);
-		} catch (Exception e) {
-		}
+//		try {
+//			String str = new String(bs);
+//			Logger.print(Level.V, "http write content", str);
+//		} catch (Exception e) {
+//		}
 
 		OutputStream os = socket.getOutputStream();
 		os.write(bs);

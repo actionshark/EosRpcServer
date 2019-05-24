@@ -10,7 +10,7 @@ public class Main {
 		fl.setFiles("log1.txt", "log2.txt");
 
 		Logger.setInstance(fl);
-		Logger.setLevel(Level.V);
+		Logger.setLevel(Level.D);
 
 		int httpPort = 10002;
 		int clientPort = 10003;
